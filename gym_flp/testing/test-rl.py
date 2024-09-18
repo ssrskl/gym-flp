@@ -5,13 +5,14 @@ import imageio
 import numpy as np
 from stable_baselines3 import DQN
 
-model = DQN.load("dqn-fbs-episode-1000-AEG20")
+# model = DQN.load("dqn-fbs-episode-1000-AEG20")
+model = DQN.load("models/dqn-fbs-Convergence-400-AB20-ar3")
 best_fitness = float("inf")
 best_permutation = None
 best_bay = None
 astringency_number = 0
 
-env = gym.make("fbs-v0", instance="AEG20", mode="human")
+env = gym.make("fbs-v0", instance="AB20-ar3", mode="human")
 obs = env.reset()
 for i in range(20000):
     action, _state = model.predict(obs)

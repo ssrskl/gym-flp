@@ -11,39 +11,7 @@ from stable_baselines3.ppo.ppo import PPO
 env = gym.make("fbs-v0", instance="MB12", mode="human")
 # model = DQN("MlpPolicy", env, verbose=1,tensorboard_log="logs")
 model = DQN("MlpPolicy", env, verbose=1)
-# model = DQN(
-#     "MlpPolicy",
-#     env,
-#     learning_rate=0.0001,
-#     buffer_size=200000,
-#     learning_starts=50000,
-#     batch_size=32,
-#     tau=1.0,
-#     gamma=0.99,
-#     train_freq=4,
-#     gradient_steps=1,
-#     replay_buffer_class=None,
-#     replay_buffer_kwargs=None,
-#     optimize_memory_usage=False,
-#     target_update_interval=10000,
-#     exploration_fraction=0.9,
-#     exploration_initial_eps=1.0,
-#     exploration_final_eps=0.05,
-#     max_grad_norm=10,
-#     policy_kwargs=None,
-#     verbose=1,
-#     seed=42,
-#     device="auto",
-#     _init_setup_model=True,
-# )
 
-# 训练模型
-# model.learn(total_timesteps=4000 * 10)
-# model.save("dqn-fbs-40000-MB12")
-
-# for round in range(100):
-#     print("现在训练轮数:", round)
-#     model.learn(total_timesteps=4000)
 
 
 for episode in range(100):

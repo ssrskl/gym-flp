@@ -151,7 +151,6 @@ class GeneticAlgorithm:
     def _run(self, experiments_number=1):
         # 实验参数记录
         start_time = datetime.now()  # 实验开始时间
-
         # 加载环境
         env = gym.make("fbs-v0", instance=self.instance, mode="human")
         model_name = "dqn-fbs-40000-" + self.instance

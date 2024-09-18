@@ -73,17 +73,21 @@ class MHC:
         # P矩阵用于将后续的距离矩阵转换为设施ID升序的距离矩阵，方便与物流矩阵相乘
         P = self.permutationMatrix(s)
         MHC = np.sum(np.tril(np.dot(P.T, np.dot(D, P))) * (F.T))
+
         if fac_aspect_ratio is None:
-            return MHC
-        for i, (b, h) in enumerate(zip(fac_b, fac_h)):
-            facility_aspect_ratio = max(b, h) / min(b, h)
-            aspect_ratio_list.append(facility_aspect_ratio)
-            if not (
-                min(fac_aspect_ratio[i])
-                <= facility_aspect_ratio
-                <= max(fac_aspect_ratio[i])
-            ):
-                non_feasible_counter += 1
+            for i, (b, h) in enumerate(zip(fac_b, fac_h)):
+                if b < 1 or h < 1:
+                    non_feasible_counter += 1
+        else:
+            for i, (b, h) in enumerate(zip(fac_b, fac_h)):
+                facility_aspect_ratio = max(b, h) / min(b, h)
+                aspect_ratio_list.append(facility_aspect_ratio)
+                if not (
+                    min(fac_aspect_ratio[i])
+                    <= facility_aspect_ratio
+                    <= max(fac_aspect_ratio[i])
+                ):
+                    non_feasible_counter += 1
         aspect_ratio = np.array(aspect_ratio_list)
         # print("aspect_ratio: ", aspect_ratio)
         fitness = MHC + MHC * (non_feasible_counter**k)
@@ -108,17 +112,4 @@ class MHC:
             dtype=float,
         )
 
-    # 计算每个设施之间的曼哈顿距离
-    def _getDistances(self, x, y):
-        print("x: ", x)
-        print("y: ", y)
-        return np.array(
-            [
-                [
-                    abs(float(x[j]) - float(valx)) + abs(float(valy) - float(y[i]))
-                    for (i, valx) in enumerate(x)
-                ]
-                for (j, valy) in enumerate(y)
-            ],
-            dtype=float,
-        )
+

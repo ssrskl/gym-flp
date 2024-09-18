@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-areas_file_dir_path = os.path.join(__location__, "instances/continual/areas")
-flows_file_dir_path = os.path.join(__location__, "instances/continual/flows")
+areas_file_dir_path = os.path.join(__location__, "./instances/continual/areas")
+flows_file_dir_path = os.path.join(__location__, "./instances/continual/flows")
 
 # 设施数量字典
 facilities_number_dict = {}

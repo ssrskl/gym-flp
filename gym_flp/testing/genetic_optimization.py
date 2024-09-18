@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 import random
+from gym_flp.testing.utils.ExperimentDataSaver import ExperimentDataSaver
 import pandas as pd
 import openpyxl
 import gym
@@ -172,36 +173,19 @@ class GeneticAlgorithm:
         duration = (end_time - start_time).total_seconds()  # 实验持续时间
         print("实验持续时间：", duration)
         # 保存实验数据
-        data = {
-            "实验次数": experiments_number,
-            "开始时间": start_time,
-            "结束时间": end_time,
-            "持续时间": duration,
-            "种群大小": self.population_size,
-            "迭代次数": self.generations,
-            "变异率": self.mutation_rate,
-            "最优排列": [best_permutation],
-            "最优区带": [best_bay],
-            "最优MHC": best_fitness,
-        }
-        df = pd.DataFrame(data)
-        print(df)
-        file_path = "./实验结果/遗传算法实验数据.xlsx"
-        try:
-            with pd.ExcelWriter(
-                file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay"
-            ) as writer:
-                # 获取现有数据的行数
-                book = writer.book
-                sheet = book.active
-                startrow = sheet.max_row
-                # 将新数据追加到最后一行
-                df.to_excel(writer, index=False, header=False, startrow=startrow)
-        except FileNotFoundError:
-            # 如果文件不存在，则创建一个新的文件
-            with pd.ExcelWriter(file_path, engine="openpyxl", mode="w") as writer:
-                df.to_excel(writer, index=False)
-        print(f"实验数据已保存到 {file_path}")
+        saver = ExperimentDataSaver()
+        saver.save_data(
+            experiments_number=1,
+            start_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            end_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            duration="1 minute",
+            population_size=100,
+            generations=50,
+            mutation_rate=0.01,
+            best_permutation=[1, 2, 3, 4, 5],
+            best_bay=[1, 0, 0, 1, 1],
+            best_fitness=123.45,
+        )
 
 
 # 循环实验30次
