@@ -83,8 +83,9 @@ class FbsEnv(gym.Env):
             1: "Bit Swap",  # 将bay中的随机的1转换为0，或者将0转换为1
             2: "Bay Exchange",  # 随机选择两个不同的bay，并交换它们的位置
             3: "Inverse",  # 设施在某个bay中随机选择，并翻转它们的位置
-            4: "Repair",  # 修复某个设施的位置
-            5: "Idle",  # 什么都不做
+            4: "Shuffle",  # 随机打乱某个bay中的设施顺序
+            5: "Repair",  # 修复某个设施的位置
+            6: "Idle",  # 什么都不做
         }
         self.bay_space = spaces.Box(low=0, high=1, shape=(self.n,), dtype=np.int)
 
@@ -352,6 +353,18 @@ class FbsEnv(gym.Env):
             q = default_rng().choice(range(len(bays)))  # 随机选择一个区带
             bays[q] = np.flip(bays[q])  # 反转，例如[1,2,3,4,5] -> [5,4,3,2,1]
 
+            new_bay = np.concatenate(bay_breaks)
+            new_state = np.concatenate(bays)
+
+            # Make sure state is saved as copy
+            self.permutation = np.array(new_state)
+            self.bay = np.array(new_bay)
+        elif a == "Shuffle":
+            # 随机打乱某个bay中的设施顺序
+            q = default_rng().choice(range(len(bays)))  # 随机选择一个区带
+            bays[q] = default_rng().choice(
+                bays[q], size=len(bays[q]), replace=False
+            )  # 打乱顺序
             new_bay = np.concatenate(bay_breaks)
             new_state = np.concatenate(bays)
 
