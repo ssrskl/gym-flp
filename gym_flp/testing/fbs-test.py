@@ -9,12 +9,12 @@ env = gym.make("fbs-v0", instance="O7-maoyan", mode="human")
 obs = env.reset()
 permutation = env.permutation
 bay = env.bay
-a = env.a
+a = env.area
 W = env.W
 print(f"排列：{env.permutation}")
 print(f"区带:{env.bay}")
 print(f"面积:{a}")
-print(f"设施长宽比:{env.beta}")
+print(f"设施长宽比:{env.fac_aspect_ratio}")
 print(f"设施宽度限制:{env.w}")
 print(f"设施长度限制:{env.l}")
 print(f"厂房W:{env.W}")# y

@@ -84,6 +84,7 @@ class FbsEnv(gym.Env):
             2: "Bay Exchange",  # 随机选择两个不同的bay，并交换它们的位置
             3: "Inverse",  # 设施在某个bay中随机选择，并翻转它们的位置
             4: "Repair",  # 修复某个设施的位置
+            5: "Idle",  # 什么都不做
         }
         self.bay_space = spaces.Box(low=0, high=1, shape=(self.n,), dtype=np.int)
 
@@ -449,6 +450,8 @@ class FbsEnv(gym.Env):
                 self.bay = np.concatenate(bay_breaks)
             else:
                 print("没有不合格的bay")
+        elif a == "Idle":
+            pass
         # 当设施变换完成之后，重新计算适应度函数
         (
             self.fac_x,
