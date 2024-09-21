@@ -1,5 +1,4 @@
 # 禁忌搜索优化算法
-# 禁忌搜索优化算法
 
 import random
 from gym_flp.envs.FBS import FbsEnv
@@ -69,12 +68,12 @@ def tabu_search(env, num_iterations, tabu_list_size, initial_solution, step_size
 
 
 # 初始化FBS环境
-env = FbsEnv(mode="human", instance="AEG20")
+env = FbsEnv(mode="human", instance="O9-maoyan")
 
 # 初始化参数
 initial_solution = env.sampler()  # 初始解
-num_iterations = 100  # 迭代次数
-tabu_list_size = 10  # 禁忌表大小
+num_iterations = 5000  # 迭代次数
+tabu_list_size = 50  # 禁忌表大小
 step_size = 1  # 邻域步长
 
 # 执行禁忌搜索
