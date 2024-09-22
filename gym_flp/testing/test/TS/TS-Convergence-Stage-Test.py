@@ -53,6 +53,21 @@ class TabuSearch:
             fromEnv = copy.deepcopy(self.env)
         return neighbors
 
+    def get_neighbors_2(self, current_solution, step_size=1, neighborhood_size=5):
+        neighbors = []
+        for _ in range(neighborhood_size):
+            fromEnv = copy.deepcopy(self.env)
+            action, _ = self.model.predict(self.env.state)
+            action_number = action.item()
+            new_obs, reward, done, info = self.env.step(action_number)
+            self.model.replay_buffer.add(
+                self.env.state, new_obs, action, reward, done, [info]
+            )
+            permutation = self.env.permutation
+            bay = self.env.bay
+            neighbors.append((permutation, bay))
+        return neighbors
+
     # 禁忌搜索算法
     def tabu_search(self):
         current_solution = self.initial_solution
@@ -101,10 +116,11 @@ class TabuSearch:
 
 
 # 循环测试
-for i in range(10):
+for i in range(30):
+    print(f"第{i}次循环")
     # 初始化FBS环境和模型
     total_steps = 10000
-    instance = "Du62"
+    instance = "AB20-ar3"
     env = FbsEnv(mode="human", instance=instance)
     model = DQN.load(f"./models/ts/dqn-fbs-TS-{instance}-{total_steps}")
     # 初始化参数
@@ -128,6 +144,10 @@ for i in range(10):
 
     print(f"\nBest Solution: {best_solution}")
     print(f"Minimum Value: {best_value:.6f}")
+
+    # 释放资源
+    model.replay_buffer.clear()
+    env.close()
 
     # env.reset(layout=best_solution)
     # env.render()

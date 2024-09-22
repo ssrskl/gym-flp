@@ -50,6 +50,21 @@ class TabuSearch:
             fromEnv.reset(layout=current_solution)
         return neighbors
 
+    def get_neighbors_2(self, current_solution, step_size=1, neighborhood_size=5):
+        neighbors = []
+        for _ in range(neighborhood_size):
+            fromEnv = copy.deepcopy(self.env)
+            action, _ = self.model.predict(self.env.state)
+            action_number = action.item()
+            new_obs, reward, done, info = self.env.step(action_number)
+            self.model.replay_buffer.add(
+                self.env.state, new_obs, action, reward, done, [info]
+            )
+            permutation = self.env.permutation
+            bay = self.env.bay
+            neighbors.append((permutation, bay))
+        return neighbors
+
     # 禁忌搜索算法
     def tabu_search(self):
         self.model.learn(total_timesteps=1, reset_num_timesteps=False)
@@ -111,7 +126,7 @@ class TabuSearch:
 
 
 # 初始化FBS环境和模型
-instance = "Du62"
+instance = "AB20-ar3"
 env = FbsEnv(mode="human", instance=instance)
 model = DQN("MlpPolicy", env, verbose=1)
 
