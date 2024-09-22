@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 import random
-from gym_flp.testing.utils.ExperimentDataSaver import ExperimentDataSaver
+from gym_flp.util.ExperimentDataSaver import ExperimentDataSaver
 import pandas as pd
 import openpyxl
 import gym

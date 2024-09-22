@@ -1,4 +1,4 @@
-# 禁忌搜索优化算法
+# 禁忌搜索收敛模型二阶段优化算法
 
 import copy
 import random
@@ -36,18 +36,18 @@ class TabuSearch:
     # 获取邻域解
     def get_neighbors(self, current_solution, step_size=1, neighborhood_size=5):
         neighbors = []
+        fromEnv = copy.deepcopy(self.env)
         for _ in range(neighborhood_size):
-            fromEnv = copy.deepcopy(self.env)
             action, _ = self.model.predict(self.env.state)
             action_number = action.item()
-            self.env.reset(layout=current_solution)
-            new_obs, reward, done, info = self.env.step(action_number)
+            new_obs, reward, done, info = fromEnv.step(action_number)
             self.model.replay_buffer.add(
-                fromEnv.state, new_obs, action, reward, done, [info]
+                self.env.state, new_obs, action, reward, done, [info]
             )
-            permutation = self.env.permutation
-            bay = self.env.bay
+            permutation = fromEnv.permutation
+            bay = fromEnv.bay
             neighbors.append((permutation, bay))
+            fromEnv.reset(layout=current_solution)
         return neighbors
 
     # 禁忌搜索算法
@@ -93,10 +93,9 @@ class TabuSearch:
             # 定期训练模型
             if self.total_steps % 1000 == 0:
                 self.train_model()
-
-            print(
-                f"Iteration {iteration + 1}: Best Value = {best_value:.6f}, Current Solution = {current_solution}"
-            )
+                print(
+                    f"Iteration {iteration + 1}: Best Value = {best_value:.6f}, Current Solution = {current_solution}"
+                )
 
         return best_solution, best_value
 
@@ -112,14 +111,16 @@ class TabuSearch:
 
 
 # 初始化FBS环境和模型
-instance = "O9-maoyan"
+instance = "Du62"
 env = FbsEnv(mode="human", instance=instance)
 model = DQN("MlpPolicy", env, verbose=1)
 
 # 初始化参数
-initial_solution = env.sampler()  # 初始解
-num_iterations = 5000  # 迭代次数
-tabu_list_size = 50  # 禁忌表大小
+initial_solution = FBSUtils.binary_solution_generator(
+    env.area, env.n, env.fac_limit_aspect, env.L
+)  # 初始解
+num_iterations = 10000  # 迭代次数
+tabu_list_size = 100  # 禁忌表大小
 step_size = 1  # 邻域步长
 
 ts = TabuSearch(
