@@ -145,10 +145,6 @@ for i in range(30):
     print(f"\nBest Solution: {best_solution}")
     print(f"Minimum Value: {best_value:.6f}")
 
-    # 释放资源
-    model.replay_buffer.clear()
-    env.close()
-
     # env.reset(layout=best_solution)
     # env.render()
     # env.close()

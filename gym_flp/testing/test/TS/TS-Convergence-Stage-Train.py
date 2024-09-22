@@ -26,7 +26,6 @@ class TabuSearch:
         self.initial_solution = initial_solution
         self.step_size = step_size
         self.total_steps = 0  # 添加总步数计数器
-        self.model.learn(total_timesteps=1, reset_num_timesteps=False)
 
     # 目标函数：计算设施布局的适应度
     def objective_function(self, layout):
@@ -67,7 +66,7 @@ class TabuSearch:
 
     # 禁忌搜索算法
     def tabu_search(self):
-        self.model.learn(total_timesteps=1, reset_num_timesteps=False)
+        self.model.learn(total_timesteps=10000, reset_num_timesteps=False)
         current_solution = self.initial_solution
         best_solution = current_solution
         best_value = self.objective_function(current_solution)

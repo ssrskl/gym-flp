@@ -1,3 +1,4 @@
+# 模拟退火算法试验数据生成器
 # 禁忌搜索算法试验数据生成器
 from datetime import datetime
 import os
@@ -5,7 +6,8 @@ import pandas as pd
 from gym_flp.util.ExperimentDataGenerator import ExperimentDataGenerator
 import numpy as np
 
-class TSExperimentDataGenerator(ExperimentDataGenerator):
+
+class SAExperimentDataGenerator(ExperimentDataGenerator):
     def __init__(
         self,
         experiment_name,
@@ -16,10 +18,10 @@ class TSExperimentDataGenerator(ExperimentDataGenerator):
         best_permutation,
         best_bay,
         best_result,
-        # TS参数
-        tabu_list_size,
-        num_iterations,
-        step_size,
+        # SA参数
+        initial_temperature,
+        cooling_rate,
+        stopping_temperature,
     ):
         super().__init__(
             experiment_name,
@@ -31,9 +33,9 @@ class TSExperimentDataGenerator(ExperimentDataGenerator):
             best_bay,
             best_result,
         )
-        self.tabu_list_size = tabu_list_size
-        self.num_iterations = num_iterations
-        self.step_size = step_size
+        self.initial_temperature = initial_temperature
+        self.cooling_rate = cooling_rate
+        self.stopping_temperature = stopping_temperature
 
     def saveExcel(self, file_path):
         data = {
@@ -41,11 +43,11 @@ class TSExperimentDataGenerator(ExperimentDataGenerator):
             "开始时间": self.start_time,
             "结束时间": self.end_time,
             "持续时间": self.duration,
-            "禁忌表大小": self.tabu_list_size,
-            "迭代次数": self.num_iterations,
-            "邻域步长": self.step_size,
-            "最优排列": np.array2string(self.best_permutation, separator=','),
-            "最优区带": np.array2string(self.best_bay, separator=','),
+            "初始温度": self.initial_temperature,
+            "降温率": self.cooling_rate,
+            "停止温度": self.stopping_temperature,
+            "最优排列": np.array2string(self.best_permutation, separator=","),
+            "最优区带": np.array2string(self.best_bay, separator=","),
             "最优结果": self.best_result,
         }
         df = pd.DataFrame(data, index=[0])  # 添加 index=[0] 以确保 DataFrame 只有一行
@@ -60,7 +62,11 @@ class TSExperimentDataGenerator(ExperimentDataGenerator):
             os.makedirs(base_path)
         try:
             with pd.ExcelWriter(
-                file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay", date_format="YYYY-MM-DD HH:MM:SS"
+                file_path,
+                engine="openpyxl",
+                mode="a",
+                if_sheet_exists="overlay",
+                date_format="YYYY-MM-DD HH:MM:SS",
             ) as writer:
                 # 获取现有数据的行数
                 book = writer.book
@@ -70,6 +76,11 @@ class TSExperimentDataGenerator(ExperimentDataGenerator):
                 df.to_excel(writer, index=False, header=False, startrow=startrow)
         except FileNotFoundError:
             # 如果文件不存在，则创建一个新的文件
-            with pd.ExcelWriter(file_path, engine="openpyxl", mode="w", date_format="YYYY-MM-DD HH:MM:SS") as writer:
+            with pd.ExcelWriter(
+                file_path,
+                engine="openpyxl",
+                mode="w",
+                date_format="YYYY-MM-DD HH:MM:SS",
+            ) as writer:
                 df.to_excel(writer, index=False)
         print(f"实验数据已保存到 {file_path}")

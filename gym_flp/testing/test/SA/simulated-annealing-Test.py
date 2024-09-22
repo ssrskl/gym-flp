@@ -1,7 +1,7 @@
 # 模拟退火测试
-# model = DQN.load(f"./models/dqn-fbs-SA-11000-{instance}")
-# 模拟退火算法
+from datetime import datetime
 import math
+import os
 import random
 import gym
 import gym_flp
@@ -10,6 +10,7 @@ import numpy as np
 from stable_baselines3 import DQN
 from stable_baselines3.common.logger import configure
 from gym_flp.util import FBSUtils
+from gym_flp.util.SAExperimentDataGenerator import SAExperimentDataGenerator
 
 
 class SimulatedAnnealingFBS:
@@ -122,38 +123,59 @@ def generate_initial_temperature(env):
 
 
 def main() -> None:
-    instance = "Du62"
-    trainingFrequency = 100
-    env = gym.make("fbs-v0", instance=instance, mode="human")
-    env.reset()
+    for i in range(20):
+        instance = "AB20-ar3"
+        total_steps = 10000
+        env = gym.make("fbs-v0", instance=instance, mode="human")
+        env.reset()
+        model = DQN.load(f"./models/SA/dqn-fbs-SA-{instance}-{total_steps}")
+        # 设置模拟退火参数
+        initial_temperature = generate_initial_temperature(env)
+        print(f"初始温度：{initial_temperature}")
+        cooling_rate = 0.999
+        stopping_temperature = 0.1
 
-    model = DQN.load(f"./models/dqn-fbs-SA-2000-{instance}")
+        sa = SimulatedAnnealingFBS(
+            initial_temperature, cooling_rate, stopping_temperature, env, model
+        )
+        (
+            best_permutation,
+            best_bay,
+            best_fitness,
+            change_count,
+            total_steps,
+        ) = sa.run()
 
-    # 设置模拟退火参数
-    initial_temperature = generate_initial_temperature(env)
-    print(f"初始温度：{initial_temperature}")
-    cooling_rate = 0.99
-    stopping_temperature = 0.1
-
-    sa = SimulatedAnnealingFBS(
-        initial_temperature, cooling_rate, stopping_temperature, env, model
-    )
-    (
-        best_permutation,
-        best_bay,
-        best_fitness,
-        change_count,
-        total_steps,
-    ) = sa.run()
-
-    print(f"初始温度：{initial_temperature}")
-    print(f"Best permutation: {best_permutation}")
-    print(f"Best fitness: {best_fitness}")
-    print(f"总计变换次数：{change_count}")
-    print(f"总计迭代次数：{total_steps}")
-    env.reset(layout=(best_permutation, best_bay))
-    env.render()
-    env.close()
+        print(f"初始温度：{initial_temperature}")
+        print(f"Best permutation: {best_permutation}")
+        print(f"Best fitness: {best_fitness}")
+        print(f"总计变换次数：{change_count}")
+        print(f"总计迭代次数：{total_steps}")
+        # env.reset(layout=(best_permutation, best_bay))
+        # env.render()
+        # env.close()
+        # 保存实验数据
+        # 保存实验数据
+        base_path = r"E:\projects\pythonprojects\gym-flp\algorithm\src\gym-flp"  # 使用原始字符串避免转义问题
+        file_path = os.path.join(
+            base_path,
+            "ExperimentResult",
+            "SA",
+            "sa-convergence-stage-{}.xlsx".format(instance),
+        )
+        SAExperimentDataGenerator(
+            experiment_name="TS-Convergence-Stage-Test",
+            experiment_id=i + 1,
+            start_time=datetime.now(),
+            end_time=datetime.now(),
+            duration=0,
+            best_permutation=best_permutation,
+            best_bay=best_bay,
+            best_result=best_fitness,
+            initial_temperature=initial_temperature,
+            cooling_rate=cooling_rate,
+            stopping_temperature=stopping_temperature,
+        ).saveExcel(file_path)
 
 
 if __name__ == "__main__":

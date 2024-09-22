@@ -12,8 +12,15 @@ from gym_flp.util import FBSUtils
 
 class SimulatedAnnealingFBS:
     def __init__(
-        self, initial_temperature, cooling_rate, stopping_temperature, env, model
+        self,
+        instance,
+        initial_temperature,
+        cooling_rate,
+        stopping_temperature,
+        env,
+        model,
     ):
+        self.instance = instance
         self.temperature = initial_temperature
         self.cooling_rate = cooling_rate
         self.stopping_temperature = stopping_temperature
@@ -89,7 +96,9 @@ class SimulatedAnnealingFBS:
             print(f"开始训练模型，步数：{self.total_steps}")
             # 从 replay buffer 中抽取批次进行训练
             self.model.train(batch_size=self.model.batch_size, gradient_steps=1)
-            self.model.save(f"./models/dqn-fbs-SA-{self.total_steps}-Du62")
+            self.model.save(
+                f"./models/SA/dqn-fbs-SA-{self.instance}-{self.total_steps}"
+            )
 
     def run(self):
         while self.temperature > self.stopping_temperature:
@@ -125,7 +134,7 @@ def generate_initial_temperature(env):
 
 
 def main() -> None:
-    instance = "Du62"
+    instance = "AB20-ar3"
     trainingFrequency = 100
     env = gym.make("fbs-v0", instance=instance, mode="human")
     env.reset()
@@ -139,7 +148,7 @@ def main() -> None:
     stopping_temperature = 0.1
 
     sa = SimulatedAnnealingFBS(
-        initial_temperature, cooling_rate, stopping_temperature, env, model
+        instance, initial_temperature, cooling_rate, stopping_temperature, env, model
     )
     (
         best_permutation,
