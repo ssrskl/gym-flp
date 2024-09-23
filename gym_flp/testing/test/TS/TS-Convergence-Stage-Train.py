@@ -66,7 +66,7 @@ class TabuSearch:
 
     # 禁忌搜索算法
     def tabu_search(self):
-        self.model.learn(total_timesteps=10000, reset_num_timesteps=False)
+        self.model.learn(total_timesteps=50000, reset_num_timesteps=False)  # 增加训练次数
         current_solution = self.initial_solution
         best_solution = current_solution
         best_value = self.objective_function(current_solution)
@@ -125,7 +125,7 @@ class TabuSearch:
 
 
 # 初始化FBS环境和模型
-instance = "AB20-ar3"
+instance = "Du62"
 env = FbsEnv(mode="human", instance=instance)
 model = DQN("MlpPolicy", env, verbose=1)
 
@@ -133,8 +133,8 @@ model = DQN("MlpPolicy", env, verbose=1)
 initial_solution = FBSUtils.binary_solution_generator(
     env.area, env.n, env.fac_limit_aspect, env.L
 )  # 初始解
-num_iterations = 10000  # 迭代次数
-tabu_list_size = 100  # 禁忌表大小
+num_iterations = 100000  # 迭代次数
+tabu_list_size = 200  # 禁忌表大小
 step_size = 1  # 邻域步长
 
 ts = TabuSearch(

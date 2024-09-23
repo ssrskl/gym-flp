@@ -119,8 +119,8 @@ class TabuSearch:
 for i in range(30):
     print(f"第{i}次循环")
     # 初始化FBS环境和模型
-    total_steps = 10000
-    instance = "AB20-ar3"
+    total_steps = 100000
+    instance = "Du62"
     env = FbsEnv(mode="human", instance=instance)
     model = DQN.load(f"./models/ts/dqn-fbs-TS-{instance}-{total_steps}")
     # 初始化参数
