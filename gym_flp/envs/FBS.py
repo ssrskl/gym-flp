@@ -482,27 +482,30 @@ class FbsEnv(gym.Env):
             self.fac_x, self.fac_y, self.fac_b, self.fac_h, self.n
         )
 
-        # reward = self.best_fitness - self.Fitness
-        # if reward > 0:
-        #     self.best_fitness = self.Fitness
-        #     self.no_improve_count = 0
-        # else:
-        #     reward = 0
-        #     self.no_improve_count += 1
-        # # 结束条件
-        # self.done = (
-        #     self.current_step >= self.max_steps
-        #     or self.no_improve_count >= self.no_improve_threshold
-        # )
-        if self.MHC == self.Fitness:
-            self.done = True
+        # 计算奖励
+        reward = 0
+        if self.Fitness < self.best_fitness:
+            reward += (self.best_fitness - self.Fitness)  # 奖励改进
+            self.best_fitness = self.Fitness
+            self.no_improve_count = 0
         else:
-            self.done = False
-        reward = self.MHC - self.Fitness
-        # reward = -self.Fitness
+            reward -= 1  # 惩罚没有改进
+            self.no_improve_count += 1
+
+        # 额外的惩罚机制，例如超出布局边界或不符合设施约束
+        if any(self.fac_aspect_ratio > self.fac_limit_aspect.max()):
+            reward -= 10  # 惩罚不符合设施约束
+
+        # 结束条件
+        self.done = (
+            self.current_step >= self.max_steps
+            or self.no_improve_count >= self.no_improve_threshold
+        )
+
         info = {"mhc": self.MHC, "fitness": self.Fitness, "TimeLimit.truncated": False}
         if self.current_step >= self.max_steps:
             info["TimeLimit.truncated"] = True
+
         return (
             self.state[:],
             reward,
