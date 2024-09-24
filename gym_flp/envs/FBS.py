@@ -65,7 +65,7 @@ class FbsEnv(gym.Env):
             print("Available Problem Sets:", self.FlowMatrices.keys())
             self.instance = input("选择一个问题模型:").strip()  # 清除输入两端的空格
         self.F = self.FlowMatrices[self.instance]  # 物流强度矩阵
-        self.F = FBSUtils.transfer_matrix(self.F)  # 物流强度矩阵转换
+        # self.F = FBSUtils.transfer_matrix(self.F)  # 物流强度矩阵转换
         self.n = self.problems[self.instance]  # 问题模型的设施数量
         # 获得面积数据（横纵比，长度，宽度，面积，最小长度）
         self.fac_limit_aspect, self.l, self.w, self.area, self.min_side_length = (
@@ -85,7 +85,7 @@ class FbsEnv(gym.Env):
             3: "Inverse",  # 设施在某个bay中随机选择，并翻转它们的位置
             4: "Shuffle",  # 随机打乱某个bay中的设施顺序
             5: "Repair",  # 修复某个设施的位置
-            6: "Idle",  # 什么都不做
+            # 6: "Idle",  # 什么都不做
         }
         self.bay_space = spaces.Box(low=0, high=1, shape=(self.n,), dtype=np.int)
 
@@ -462,9 +462,8 @@ class FbsEnv(gym.Env):
                 self.permutation = np.concatenate(bays)
                 self.bay = np.concatenate(bay_breaks)
             else:
-                print("没有不合格的bay")
-        elif a == "Idle":
-            pass
+                pass
+                # print("没有不合格的bay")
         # 当设施变换完成之后，重新计算适应度函数
         (
             self.fac_x,

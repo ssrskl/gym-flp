@@ -174,12 +174,91 @@ def load_instance_data(instance):
             [12, 20, 18, 16, 9, 7, 8, 15, 19, 6, 5, 13, 2, 10, 14, 4, 17, 3, 1, 11]
         )
         bay = np.array([0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1])
+    elif instance == "SC35-maoyan":
+        permutation = np.array(
+            [
+                3,
+                4,
+                18,
+                21,
+                15,
+                35,
+                13,
+                26,
+                16,
+                10,
+                31,
+                8,
+                32,
+                12,
+                9,
+                7,
+                20,
+                6,
+                25,
+                34,
+                24,
+                23,
+                19,
+                2,
+                5,
+                14,
+                28,
+                27,
+                30,
+                33,
+                11,
+                22,
+                17,
+                1,
+                29,
+            ]
+        )
+        bay = np.array(
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+            ]
+        )
     else:
         raise ValueError(f"Unknown instance: {instance}")
     return permutation, bay
 
 
-instance = "AB20-ar3"
+instance = "SC35-maoyan"
 permutation, bay = load_instance_data(instance)
 env = gym.make("fbs-v0", instance=instance, mode="human")
 

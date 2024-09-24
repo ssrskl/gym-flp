@@ -72,7 +72,7 @@ def tabu_search(env, num_iterations, tabu_list_size, initial_solution, step_size
 
 for i in range(30):
     # 初始化FBS环境
-    instance = "Du62"
+    instance = "SC35-maoyan"
     env = FbsEnv(mode="human", instance=instance)
     # 初始化参数
     initial_solution = FBSUtils.binary_solution_generator(

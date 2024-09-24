@@ -116,7 +116,7 @@ class TabuSearch:
 
 
 # 循环测试
-for i in range(30):
+for i in range(10):
     print(f"第{i}次循环")
     # 初始化FBS环境和模型
     total_steps = 100000

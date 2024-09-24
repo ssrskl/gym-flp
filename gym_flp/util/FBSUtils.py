@@ -11,10 +11,11 @@ def transfer_matrix(matrix: np.ndarray):
     :param matrix: 矩阵
     :return: 转置后的矩阵
     """
+    print("转换前: ", matrix)
     LowerTriangular = np.tril(matrix, -1).T
     resultMatrix = LowerTriangular + matrix
     resultMatrix = np.triu(resultMatrix)
-
+    print("转换后: ", resultMatrix)
     return resultMatrix
 
 
