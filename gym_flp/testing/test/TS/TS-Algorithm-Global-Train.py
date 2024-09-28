@@ -1,7 +1,6 @@
-# 禁忌搜索收敛模型二阶段优化算法
+# 禁忌搜索收敛模型全局优化算法（使用最后经过禁忌搜索后的结果来计算奖励函数）
 
 import copy
-import random
 from gym_flp.envs.FBS import FbsEnv
 from gym_flp.util import FBSUtils
 from stable_baselines3 import DQN
@@ -105,7 +104,9 @@ class TabuSearch:
                 )  # 将当前解转换为元组
                 if len(tabu_list) > self.tabu_list_size:
                     tabu_list.pop(0)  # 保持禁忌表大小固定
-
+            
+            
+            
             # 定期训练模型
             if self.total_steps % 1000 == 0:
                 self.train_model()
@@ -127,16 +128,16 @@ class TabuSearch:
 
 
 # 初始化FBS环境和模型
-instance = "AB20-ar3"
+instance = "Du62"
 env = FbsEnv(mode="human", instance=instance)
-model = DQN("MlpPolicy", env, verbose=1, buffer_size=100000, batch_size=64)
+model = DQN("MlpPolicy", env, verbose=1)
 
 # 初始化参数
 initial_solution = FBSUtils.binary_solution_generator(
     env.area, env.n, env.fac_limit_aspect, env.L
 )  # 初始解
-num_iterations = 100000  # 迭代次数
-tabu_list_size = 200  # 禁忌表大小
+num_iterations = 10000  # 迭代次数
+tabu_list_size = 100  # 禁忌表大小
 step_size = 1  # 邻域步长
 
 ts = TabuSearch(

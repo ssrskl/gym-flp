@@ -225,15 +225,36 @@ def getCoordinates_mao(permutation, bay, a, W):
     return fac_x, fac_y, lengths, widths
 
 
-# 计算距离矩阵
-def getDistances(x, y):
+# 计算欧几里得距离矩阵
+def getEuclideanDistances(x, y):
+    """计算欧几里得距离矩阵
+    Args:
+        x (np.ndarray): 设施x坐标
+        y (np.ndarray): 设施y坐标
+    Returns:
+        np.ndarray: 距离矩阵
+    """
+    return np.sqrt(
+        np.array(
+            [
+                [(x[i] - x[j]) ** 2 + (y[i] - y[j]) ** 2 for j in range(len(x))]
+                for i in range(len(x))
+            ]
+        )
+    )
+
+
+# 计算曼哈顿距离矩阵
+def getManhattanDistances(x, y):
+    """计算曼哈顿距离矩阵
+    Args:
+        x (np.ndarray): 设施x坐标
+        y (np.ndarray): 设施y坐标
+    """
     return np.array(
         [
-            [
-                abs(float(x[j]) - float(valx)) + abs(float(valy) - float(y[i]))
-                for (i, valx) in enumerate(x)
-            ]
-            for (j, valy) in enumerate(y)
+            [abs(x[i] - x[j]) + abs(y[i] - y[j]) for j in range(len(x))]
+            for i in range(len(x))
         ],
         dtype=float,
     )
@@ -286,7 +307,7 @@ def getFitness(mhc, fac_b, fac_h, fac_limit_aspect):
 def StatusUpdatingDevice(permutation, bay, a, W, F, fac_limit_aspect_ratio):
     fac_x, fac_y, fac_b, fac_h = getCoordinates_mao(permutation, bay, a, W)
     fac_aspect_ratio = np.maximum(fac_b, fac_h) / np.minimum(fac_b, fac_h)
-    D = getDistances(fac_x, fac_y)
+    D = getManhattanDistances(fac_x, fac_y)
     TM = getTransportIntensity(D, F, permutation)
     mhc = getMHC(D, F, permutation)
     fitness = getFitness(mhc, fac_b, fac_h, fac_limit_aspect_ratio)
@@ -398,3 +419,26 @@ def exchangeOptimization(
 #     # print("局部搜索优化后的最优排列: ", best_perm)
 #     # print("局部搜索优化后的最优适应度函数值: ", best_fitness)
 #     self.permutation = best_perm
+
+
+# 将排列和bay转换为二维数组，例如：
+# 输入：permutation = [1,2,3,4,5,6,7] bay = [0,0,0,1,0,0,1]
+# 输出：array = [[1,2,3,4],[5,6,7]]
+def permutationToArray(permutation, bay):
+    array = []
+    start = 0
+    for i, val in enumerate(bay):
+        if val == 1:
+            array.append(permutation[start : i + 1])
+            start = i + 1
+    return array
+
+
+# 将二维数组转换为排列和bay
+def arrayToPermutation(array):
+    permutation = []
+    bay = []
+    for sub_array in array:
+        permutation.extend(sub_array)
+        bay.extend([0] * (len(sub_array) - 1) + [1])
+    return permutation, bay

@@ -7,6 +7,7 @@ import random
 from gym_flp.envs.FBS import FbsEnv
 from gym_flp.util import FBSUtils
 from gym_flp.util.TSExperimentDataGenerator import TSExperimentDataGenerator
+from stable_baselines3 import DQN
 
 
 # 目标函数：计算设施布局的适应度
@@ -15,14 +16,15 @@ def objective_function(env, layout):
     return env.Fitness
 
 
-      
 # 获取邻域解2 （领域解来源于当前环境，当前环境在迭代过程中不断更新）
-def get_neighbors(env, current_solution, step_size=1, neighborhood_size=5):
+def get_neighbors(env, model, current_solution, step_size=1, neighborhood_size=5):
     neighbors = []
     for _ in range(neighborhood_size):
-        action = random.choice(list(env.actions.keys()))
+        # action = random.choice(list(env.actions.keys()))
+        action, _ = model.predict(env.state)
+        action_number = action.item()
         env.reset(layout=current_solution)
-        env.step(action)
+        env.step(action_number)
         permutation = env.permutation
         bay = env.bay
         neighbors.append((permutation, bay))
@@ -30,7 +32,9 @@ def get_neighbors(env, current_solution, step_size=1, neighborhood_size=5):
 
 
 # 禁忌搜索算法
-def tabu_search(env, num_iterations, tabu_list_size, initial_solution, step_size=1):
+def tabu_search(
+    env, model, num_iterations, tabu_list_size, initial_solution, step_size=1
+):
     current_solution = initial_solution
     best_solution = current_solution
     best_value = objective_function(env, current_solution)
@@ -38,7 +42,7 @@ def tabu_search(env, num_iterations, tabu_list_size, initial_solution, step_size
     tabu_list = []
 
     for iteration in range(num_iterations):
-        neighbors = get_neighbors(env, current_solution, step_size)
+        neighbors = get_neighbors(env, model, current_solution, step_size)
         candidate_solution = None
         candidate_value = float("inf")
 
@@ -72,21 +76,23 @@ def tabu_search(env, num_iterations, tabu_list_size, initial_solution, step_size
     return best_solution, best_value
 
 
+instance = "AB20-ar3"
+total_steps = 100000
+model = DQN.load(f"./models/ts/dqn-fbs-TS-{instance}-{total_steps}")
 for i in range(30):
-    # 初始化FBS环境
-    instance = "SC35-maoyan"
-    env = FbsEnv(mode="human", instance=instance)
+    print(f"第{i+1}次实验")
     # 初始化参数
+    env = FbsEnv(mode="human", instance=instance)
     initial_solution = FBSUtils.binary_solution_generator(
         env.area, env.n, env.fac_limit_aspect, env.L
     )  # 初始解
-    num_iterations = 10000  # 迭代次数
-    tabu_list_size = 100  # 禁忌表大小
+    num_iterations = 100000  # 迭代次数
+    tabu_list_size = 200  # 禁忌表大小
     step_size = 1  # 邻域步长
 
     # 执行禁忌搜索
     best_solution, best_value = tabu_search(
-        env, num_iterations, tabu_list_size, initial_solution, step_size
+        env, model, num_iterations, tabu_list_size, initial_solution, step_size
     )
 
     print(f"\nBest Solution: {best_solution}")

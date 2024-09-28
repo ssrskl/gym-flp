@@ -189,20 +189,19 @@ class FbsEnv(gym.Env):
         ).astype(int)
 
         # 存储设施数据
-        labels = np.zeros(len(self.permutation))  # 设施编号
+        labels = np.zeros(len(self.permutation))
         positions = np.zeros((len(self.permutation), 4))
         aspect_ratio = np.zeros(len(self.permutation))
         for x, p in enumerate(self.permutation):
             x_from = state_prelim[4 * x + 1] - 0.5 * state_prelim[4 * x + 3]
-            y_from = state_prelim[4 * x + 0] - 0.5 * state_prelim[4 * x + 2]
+            y_from = self.W - (
+                state_prelim[4 * x + 0] + 0.5 * state_prelim[4 * x + 2]
+            )
             x_to = state_prelim[4 * x + 1] + 0.5 * state_prelim[4 * x + 3]
-            y_to = state_prelim[4 * x + 0] + 0.5 * state_prelim[4 * x + 2]
-            # print("设施编号: ", p)
-            # print("x_from: ", x_from)
-            # print("y_from: ", y_from)
-            # print("x_to: ", x_to)
-            # print("y_to: ", y_to)
-            # 存储到labels和positions中
+            y_to = self.W - (
+                state_prelim[4 * x + 0] - 0.5 * state_prelim[4 * x + 2]
+            )
+
             labels[x] = p
             positions[x] = [x_from, y_from, x_to, y_to]
             x_length = x_to - x_from
@@ -213,20 +212,15 @@ class FbsEnv(gym.Env):
                 G[p - 1],
                 B[p - 1],
             ]
-        # print("labels: ", labels)
-        # print("positions: ", positions)
+
         # 创建图形和坐标轴
         fig, ax = plt.subplots()
         # 绘制设施
         for i, label in enumerate(labels):
             x_from, y_from, x_to, y_to = positions[i]
-            # 创建设施，如果横纵比超出范围则使用红色
-            # print("设施编号: ", int(label))
-            # print(f"横纵比: {aspect_ratio[i]}")
-            # print(f"最大宽高比: {self.fac_limit_aspect.max()}")
             if aspect_ratio[i] > self.fac_limit_aspect.max():
                 rect = patches.Rectangle(
-                    (x_from, y_from, x_to - x_from, y_to - y_from),
+                    (x_from, y_from),
                     width=x_to - x_from,
                     height=y_to - y_from,
                     edgecolor="red",
@@ -235,7 +229,7 @@ class FbsEnv(gym.Env):
                 )
             else:
                 rect = patches.Rectangle(
-                    (x_from, y_from, x_to - x_from, y_to - y_from),
+                    (x_from, y_from),
                     width=x_to - x_from,
                     height=y_to - y_from,
                     edgecolor="green",
@@ -485,7 +479,7 @@ class FbsEnv(gym.Env):
         # 计算奖励
         reward = 0
         if self.Fitness < self.best_fitness:
-            reward += (self.best_fitness - self.Fitness)  # 奖励改进
+            reward += self.best_fitness - self.Fitness  # 奖励改进
             self.best_fitness = self.Fitness
             self.no_improve_count = 0
         else:

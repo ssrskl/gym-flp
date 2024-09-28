@@ -36,33 +36,27 @@ class TabuSearch:
         self.env.reset(layout=layout)
         return self.env.Fitness
 
-    # 获取邻域解
+    # 获取邻域解1（领域解只来源于最开始的环境, 最初的环境在迭代过程中不更新）
     def get_neighbors(self, current_solution, step_size=1, neighborhood_size=5):
         neighbors = []
         fromEnv = copy.deepcopy(self.env)
         for _ in range(neighborhood_size):
-            action, _ = self.model.predict(self.env.state)
+            action, _ = self.model.predict(fromEnv.state)
             action_number = action.item()
-            new_obs, reward, done, info = fromEnv.step(action_number)
-            self.model.replay_buffer.add(
-                self.env.state, new_obs, action, reward, done, [info]
-            )
+            fromEnv.step(action_number)
             permutation = fromEnv.permutation
             bay = fromEnv.bay
             neighbors.append((permutation, bay))
             fromEnv = copy.deepcopy(self.env)
         return neighbors
 
+    # 获取邻域解2（领域解来源于当前环境，当前环境在迭代过程中不断更新）
     def get_neighbors_2(self, current_solution, step_size=1, neighborhood_size=5):
         neighbors = []
         for _ in range(neighborhood_size):
-            fromEnv = copy.deepcopy(self.env)
             action, _ = self.model.predict(self.env.state)
             action_number = action.item()
-            new_obs, reward, done, info = self.env.step(action_number)
-            self.model.replay_buffer.add(
-                self.env.state, new_obs, action, reward, done, [info]
-            )
+            self.env.step(action_number)
             permutation = self.env.permutation
             bay = self.env.bay
             neighbors.append((permutation, bay))
@@ -78,7 +72,7 @@ class TabuSearch:
 
         for iteration in range(self.num_iterations):
             self.total_steps += 1  # 更新总步数
-            neighbors = self.get_neighbors(current_solution, self.step_size)
+            neighbors = self.get_neighbors_2(current_solution, self.step_size)
             candidate_solution = None
             candidate_value = float("inf")
 
@@ -119,7 +113,7 @@ class TabuSearch:
 for i in range(10):
     print(f"第{i}次循环")
     # 初始化FBS环境和模型
-    total_steps = 100000
+    total_steps = 10000
     instance = "Du62"
     env = FbsEnv(mode="human", instance=instance)
     model = DQN.load(f"./models/ts/dqn-fbs-TS-{instance}-{total_steps}")

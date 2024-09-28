@@ -2,36 +2,26 @@ import gym
 import gym_flp
 import numpy as np
 
+from gym_flp.util import FBSUtils
+
 
 def load_instance_data(instance):
+    if instance == "O7-maoyan":
+        return np.array([3, 5, 7, 1, 4, 6, 2]), np.array([0, 0, 1, 0, 0, 0, 1])
+    if instance == "O9-maoyan":
+        return np.array([3, 1, 6, 9, 5, 4, 2, 7, 8]), np.array(
+            [0, 0, 0, 0, 1, 0, 1, 0, 1]
+        )
     if instance == "AB20-ar3":
         permutation = np.array(
-            [20, 6, 2, 4, 18, 5, 8, 7, 19, 3, 9, 12, 15, 14, 10, 11, 13, 1, 16, 17]
+            [20, 18, 5, 8, 7, 2, 4, 6, 10, 3, 19, 1, 14, 9, 12, 15, 13, 17, 11, 16]
         )
-        bay = np.array(
-            [
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                1.0,
-            ]
+        bay = np.array([0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1])
+    elif instance == "AB20":
+        permutation = np.array(
+            [20, 18, 5, 8, 7, 2, 4, 6, 10, 3, 19, 1, 14, 9, 12, 15, 13, 17, 11, 16]
         )
+        bay = np.array([0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1])
     elif instance == "Du62":
         permutation = np.array(
             [
@@ -258,10 +248,13 @@ def load_instance_data(instance):
     return permutation, bay
 
 
-instance = "SC35-maoyan"
+instance = "Du62"
 permutation, bay = load_instance_data(instance)
 env = gym.make("fbs-v0", instance=instance, mode="human")
 
 env.reset(layout=(permutation, bay))
 env.render()
 env.close()
+
+print(FBSUtils.permutationToArray(permutation, bay))
+print(FBSUtils.arrayToPermutation(FBSUtils.permutationToArray(permutation, bay)))
