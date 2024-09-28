@@ -65,7 +65,6 @@ class FbsEnv(gym.Env):
             print("Available Problem Sets:", self.FlowMatrices.keys())
             self.instance = input("选择一个问题模型:").strip()  # 清除输入两端的空格
         self.F = self.FlowMatrices[self.instance]  # 物流强度矩阵
-        # self.F = FBSUtils.transfer_matrix(self.F)  # 物流强度矩阵转换
         self.n = self.problems[self.instance]  # 问题模型的设施数量
         # 获得面积数据（横纵比，长度，宽度，面积，最小长度）
         self.fac_limit_aspect, self.l, self.w, self.area, self.min_side_length = (
@@ -73,7 +72,11 @@ class FbsEnv(gym.Env):
         )
         self.L = int(self.LayoutLengths[self.instance])
         self.W = int(self.LayoutWidths[self.instance])
-
+        # 如果设施总面积小于布局总面积，则将布局总面积等比例缩小
+        total_area = np.sum(self.area)
+        if total_area < self.L * self.W:
+            self.L = int(self.L * math.sqrt(total_area / (self.L * self.W)))
+            self.W = int(self.W * math.sqrt(total_area / (self.L * self.W)))
         self.min_length = 1
         self.min_width = 1
 
@@ -194,13 +197,9 @@ class FbsEnv(gym.Env):
         aspect_ratio = np.zeros(len(self.permutation))
         for x, p in enumerate(self.permutation):
             x_from = state_prelim[4 * x + 1] - 0.5 * state_prelim[4 * x + 3]
-            y_from = self.W - (
-                state_prelim[4 * x + 0] + 0.5 * state_prelim[4 * x + 2]
-            )
+            y_from = self.W - (state_prelim[4 * x + 0] + 0.5 * state_prelim[4 * x + 2])
             x_to = state_prelim[4 * x + 1] + 0.5 * state_prelim[4 * x + 3]
-            y_to = self.W - (
-                state_prelim[4 * x + 0] - 0.5 * state_prelim[4 * x + 2]
-            )
+            y_to = self.W - (state_prelim[4 * x + 0] - 0.5 * state_prelim[4 * x + 2])
 
             labels[x] = p
             positions[x] = [x_from, y_from, x_to, y_to]
@@ -242,7 +241,8 @@ class FbsEnv(gym.Env):
             ax.text(
                 x_from + (x_to - x_from) / 2,
                 y_from + (y_to - y_from) / 2,
-                f"{int(label)}, AR={aspect_ratio[i]:.2f}",
+                # f"{int(label)}, AR={aspect_ratio[i]:.2f}",
+                f"{int(label)}",
                 ha="center",
                 va="center",
             )
