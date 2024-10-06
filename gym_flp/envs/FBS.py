@@ -97,24 +97,29 @@ class FbsEnv(gym.Env):
         self.bay = None
         self.done = False
         self.MHC = rewards.mhc.MHC()
-        # 观察空间的模式
-        if self.mode == "rgb_array":
-            self.observation_space = spaces.Box(
-                low=0, high=255, shape=(self.W, self.L, 3), dtype=np.uint8
-            )  # Image representation
-        elif self.mode == "human":
 
-            observation_low = np.tile(
-                np.array([0, 0, self.min_length, self.min_width], dtype=int), self.n
-            )
-            observation_high = np.tile(
-                np.array([self.W, self.L, self.W, self.L], dtype=int), self.n
-            )
-            self.observation_space = spaces.Box(
-                low=observation_low, high=observation_high, dtype=int
-            )  # Vector representation of coordinates
-        else:
-            print("Nothing correct selected")
+        # 计算流量矩阵的最大值，用于归一化
+        self.max_flow = np.max(self.F)
+        # 更新观察空间，增加流量信息和适应度值
+        observation_low = np.concatenate(
+            [
+                np.tile(np.array([0, 0, 0, 0], dtype=int), self.n),
+                np.zeros((self.n * self.n)),  # 流量信息的下限
+                np.zeros((self.n * self.n)),  # 距离矩阵的下限
+                np.array([0]),  # 适应度值的下限
+            ]
+        )
+        observation_high = np.concatenate(
+            [
+                np.tile(np.array([self.W, self.L, self.W, self.L], dtype=int), self.n),
+                np.ones((self.n * self.n)) * self.max_flow,  # 流量信息的上限
+                np.ones((self.n * self.n)) * max(self.W, self.L),  # 距离矩阵的上限
+                np.array([float("inf")]),  # 适应度值的上限
+            ]
+        )
+        self.observation_space = spaces.Box(
+            low=observation_low, high=observation_high, dtype=float
+        )
 
     def reset(self, layout=None, best_fitness=float("inf")):
         self.current_step = 0
@@ -161,8 +166,11 @@ class FbsEnv(gym.Env):
         state_prelim[1::4] = x
         state_prelim[2::4] = w
         state_prelim[3::4] = l
-        self.state = np.array(state_prelim)
-        return self.state[:]
+        # 添加流量信息和适应度值到状态向量
+        self.state = np.concatenate(
+            [state_prelim, self.F.flatten(), self.D.flatten(), np.array([self.Fitness])]
+        )
+        return self.state
 
     # 随机生成一个排列和布局
     def sampler(self):
@@ -386,7 +394,7 @@ class FbsEnv(gym.Env):
             info["TimeLimit.truncated"] = True
 
         return (
-            self.state[:],
+            self.state,
             reward,
             self.done,
             info,

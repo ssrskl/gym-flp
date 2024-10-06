@@ -79,7 +79,7 @@ def tabu_search(
 instance = "AB20-ar3"
 total_steps = 100000
 model = DQN.load(f"./models/ts/dqn-fbs-TS-{instance}-{total_steps}")
-for i in range(30):
+for i in range(5):
     print(f"第{i+1}次实验")
     # 初始化参数
     env = FbsEnv(mode="human", instance=instance)

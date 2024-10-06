@@ -194,8 +194,6 @@ def getCoordinates_mao(permutation, bay, area, W):
     fac_y = fac_y[order]
     lengths = lengths[order]
     widths = widths[order]
-    print("fac_x: ", fac_x)
-    print("fac_y: ", fac_y)
     return fac_x, fac_y, lengths, widths
 
 
