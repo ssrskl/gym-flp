@@ -3,15 +3,26 @@ import gym_flp
 import numpy as np
 
 from gym_flp.util import FBSUtils
+from gym_flp.util import AuxiliaryUtils
 
 
 def load_instance_data(instance, case):
     if instance == "O7-maoyan":
-        return np.array([3, 5, 7, 1, 4, 6, 2]), np.array([0, 0, 1, 0, 0, 0, 1])
+        if case == "1":
+            return np.array([3, 5, 7, 1, 4, 6, 2]), np.array([0, 0, 1, 0, 0, 0, 1])
+        elif case == "2":
+            return np.array([7, 5, 3, 2, 6, 4, 1]), np.array([0, 0, 1, 0, 0, 0, 1])
+    if instance == "O8":
+        return np.array([7, 4, 1, 2, 3, 6, 8, 5]), np.array([0, 0, 0, 1, 0, 0, 0, 1])
     if instance == "O9-maoyan":
-        return np.array([3, 1, 6, 9, 5, 4, 2, 7, 8]), np.array(
-            [0, 0, 0, 0, 1, 0, 1, 0, 1]
-        )
+        if case == "1":
+            return np.array([3, 1, 6, 9, 5, 4, 2, 7, 8]), np.array(
+                [0, 0, 0, 0, 1, 0, 1, 0, 1]
+            )
+        elif case == "2":
+            return np.array([7, 8, 4, 1, 2, 3, 6, 9, 5]), np.array(
+                [0, 1, 0, 0, 1, 0, 0, 0, 1]
+            )
     if instance == "AB20-ar3":
         permutation = np.array(
             [20, 18, 5, 8, 7, 2, 4, 6, 10, 3, 19, 1, 14, 9, 12, 15, 13, 17, 11, 16]
@@ -164,7 +175,7 @@ def load_instance_data(instance, case):
             return permutation, bay
         elif case == "2":
             array = [
-                [5, 39, 6],
+                [45, 39, 6],
                 [26, 35, 22, 4, 41],
                 [33, 30, 60, 50, 36, 23, 13],
                 [19, 51, 8, 18, 32, 20, 25, 53],
@@ -287,12 +298,21 @@ def load_instance_data(instance, case):
     return permutation, bay
 
 
-instance = "Du62"
+instance = "O7-maoyan"
 case = "2"
 permutation, bay = load_instance_data(instance, case)
 env = gym.make("fbs-v0", instance=instance, mode="human")
 
 env.reset(layout=(permutation, bay))
+# 打印相关信息
+print(f"距离矩阵：{env.D}")
+print(f"流量矩阵：{env.F}")
+# D的上三角矩阵
+D_triu = np.triu(env.D)
+print(f"D的上三角矩阵：{D_triu}")
+print(f"计算的MHC为：{np.sum(D_triu * env.F)}")
+AuxiliaryUtils.printMatrix(env.F)
+AuxiliaryUtils.printMatrix(env.D)
 env.render()
 env.close()
 

@@ -159,69 +159,43 @@ def _find_best_partition(arr, k):
 
 
 # 计算设施坐标和尺寸
-def getCoordinates_mao(permutation, bay, a, W):
-    facilities = np.where(bay == 1)[0]  # 查找bay为1的位置，即区带的划分点
-    bays = np.split(
-        permutation, indices_or_sections=facilities[:-1] + 1
-    )  # 将排列按照划分点分割成多个子数组，每个子数组代表一个区段的排列
-    lengths = np.zeros(
-        (
-            len(
-                permutation,
-            )
-        )
-    )
-    widths = np.zeros(
-        (
-            len(
-                permutation,
-            )
-        )
-    )
-    fac_x = np.zeros(
-        (
-            len(
-                permutation,
-            )
-        )
-    )
-    fac_y = np.zeros(
-        (
-            len(
-                permutation,
-            )
-        )
-    )
+def getCoordinates_mao(permutation, bay, area, W):
+    # 将排列按照划分点分割成多个子数组，每个子数组代表一个区段的排列
+    bays = np.split(permutation, indices_or_sections=np.where(bay == 1)[0][:-1] + 1)
+
+    # 初始化长度、宽度和坐标数组
+    lengths = np.zeros(len(permutation))
+    widths = np.zeros(len(permutation))
+    fac_x = np.zeros(len(permutation))
+    fac_y = np.zeros(len(permutation))
 
     x = 0
     start = 0
-    for b in bays:  # 遍历每一个区带中的设施
-        areas = a[b - 1]  # Get the area associated with the facilities
-        # print("areas: ", areas)
+    # 从上向下排列
+    for b in bays:
+        areas = area[b - 1]
         end = start + len(areas)
 
         # 计算每个设施的长度和宽度
-        lengths[start:end] = (
-            np.sum(areas) / W
-        )  # Calculate all facility widhts in bay acc. to Eq. (1) in https://doi.org/10.1016/j.eswa.2011.11.046
+        lengths[start:end] = np.sum(areas) / W
         widths[start:end] = areas / lengths[start:end]
 
+        # 计算设施的x坐标
         fac_x[start:end] = lengths[start:end] * 0.5 + x
         x += np.sum(areas) / W
 
-        y = np.ones(len(b))
-        ll = 0
-        for idx, l in enumerate(widths[start:end]):
-            y[idx] = ll + 0.5 * l
-            ll += l
+        # 计算设施的y坐标
+        y = np.cumsum(widths[start:end]) - widths[start:end] * 0.5
         fac_y[start:end] = y
-
         start = end
     # 顺序恢复
-    fac_x = fac_x[np.argsort(permutation)]
-    fac_y = fac_y[np.argsort(permutation)]
-    lengths = lengths[np.argsort(permutation)]
-    widths = widths[np.argsort(permutation)]
+    order = np.argsort(permutation)
+    fac_x = fac_x[order]
+    fac_y = fac_y[order]
+    lengths = lengths[order]
+    widths = widths[order]
+    print("fac_x: ", fac_x)
+    print("fac_y: ", fac_y)
     return fac_x, fac_y, lengths, widths
 
 
@@ -275,7 +249,8 @@ def getTransportIntensity(D, F, s):
 def getMHC(D, F, permutation):
     P = permutationMatrix(permutation)
     # MHC = np.sum(np.tril(np.dot(P.T, np.dot(D, P))) * (F.T))
-    MHC = np.sum(np.triu(D) * (F))
+    # MHC = np.sum(np.triu(D) * (F))
+    MHC = np.sum(D * F)
     return MHC
 
 

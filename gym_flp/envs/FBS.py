@@ -13,7 +13,7 @@ from gym import spaces
 from numpy.random import default_rng
 from PIL import Image
 from gym_flp import rewards
-from gym_flp.util import FBSUtils
+from gym_flp.util import AuxiliaryUtils, FBSUtils
 
 plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
 plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
@@ -155,129 +155,14 @@ class FbsEnv(gym.Env):
         y = y[self.permutation - 1]
         l = l[self.permutation - 1]
         w = w[self.permutation - 1]
+
         state_prelim = np.zeros((4 * n,), dtype=float)
         state_prelim[0::4] = y
         state_prelim[1::4] = x
         state_prelim[2::4] = w
         state_prelim[3::4] = l
-
-        if self.mode == "human":
-            self.state = np.array(state_prelim)
-
-        elif self.mode == "rgb_array":
-            self.state = self.ConvertCoordinatesToState(state_prelim)
-
+        self.state = np.array(state_prelim)
         return self.state[:]
-
-    def ConvertCoordinatesToState(self, state_prelim):
-        data = (
-            np.zeros((self.observation_space.shape))
-            if self.mode == "rgb_array"
-            else np.zeros((self.W, self.L, 3), dtype=np.uint8)
-        )
-
-        sources = np.sum(self.TM, axis=1)
-        sinks = np.sum(self.TM, axis=0)
-
-        R = np.array(
-            (self.permutation - np.min(self.permutation))
-            / (np.max(self.permutation) - np.min(self.permutation))
-            * 255
-        ).astype(int)
-        G = np.array(
-            (sources - np.min(sources)) / (np.max(sources) - np.min(sources)) * 255
-        ).astype(int)
-        B = np.array(
-            (sinks - np.min(sinks)) / (np.max(sinks) - np.min(sinks)) * 255
-        ).astype(int)
-
-        # 存储设施数据
-        labels = np.zeros(len(self.permutation))
-        positions = np.zeros((len(self.permutation), 4))
-        aspect_ratio = np.zeros(len(self.permutation))
-        for x, p in enumerate(self.permutation):
-            x_from = state_prelim[4 * x + 1] - 0.5 * state_prelim[4 * x + 3]
-            y_from = self.W - (state_prelim[4 * x + 0] + 0.5 * state_prelim[4 * x + 2])
-            x_to = state_prelim[4 * x + 1] + 0.5 * state_prelim[4 * x + 3]
-            y_to = self.W - (state_prelim[4 * x + 0] - 0.5 * state_prelim[4 * x + 2])
-
-            labels[x] = p
-            positions[x] = [x_from, y_from, x_to, y_to]
-            x_length = x_to - x_from
-            y_length = y_to - y_from
-            aspect_ratio[x] = max(x_length, y_length) / min(x_length, y_length)
-            data[int(y_from) : int(y_to), int(x_from) : int(x_to)] = [
-                R[p - 1],
-                G[p - 1],
-                B[p - 1],
-            ]
-
-        # 创建图形和坐标轴
-        fig, ax = plt.subplots()
-        # 绘制设施
-        for i, label in enumerate(labels):
-            x_from, y_from, x_to, y_to = positions[i]
-            if aspect_ratio[i] > self.fac_limit_aspect.max():
-                rect = patches.Rectangle(
-                    (x_from, y_from),
-                    width=x_to - x_from,
-                    height=y_to - y_from,
-                    edgecolor="red",
-                    facecolor="none",
-                    angle=0.5,
-                )
-            else:
-                rect = patches.Rectangle(
-                    (x_from, y_from),
-                    width=x_to - x_from,
-                    height=y_to - y_from,
-                    edgecolor="green",
-                    facecolor="none",
-                    angle=0,
-                )
-
-            ax.add_patch(rect)
-            # 添加标签
-            ax.text(
-                x_from + (x_to - x_from) / 2,
-                y_from + (y_to - y_from) / 2,
-                # f"{int(label)}, AR={aspect_ratio[i]:.2f}",
-                f"{int(label)}",
-                ha="center",
-                va="center",
-            )
-        ax.set_title("设施布局图")
-        ax.set_xlabel("X轴")
-        ax.set_ylabel("Y轴")
-        # 显示MHC
-        plt.figtext(
-            0.5,
-            0.93,
-            "MHC: {:.2f}".format(FBSUtils.getMHC(self.D, self.F, self.permutation)),
-            ha="center",
-            fontsize=12,
-        )
-        # 显示Fitness
-        plt.figtext(
-            0.5,
-            0.96,
-            "Fitness: {:.2f}".format(
-                FBSUtils.getFitness(
-                    self.MHC, self.fac_b, self.fac_h, self.fac_limit_aspect
-                )
-            ),
-            ha="center",
-            fontsize=12,
-        )
-        # 设置坐标范围
-        ax.set_xlim(0, self.L)
-        ax.set_ylim(0, self.W)
-        # 添加网格
-        plt.grid(False)
-        plt.gca().set_aspect("equal", adjustable="box")
-        # 显示图形
-        plt.show()
-        return np.array(data, dtype=np.uint8)
 
     # 随机生成一个排列和布局
     def sampler(self):
@@ -508,24 +393,84 @@ class FbsEnv(gym.Env):
         )
 
     def render(self, mode=None):
-        if self.mode == "human":
-            data = self.ConvertCoordinatesToState(self.state[:])
-            img = Image.fromarray(data, "RGB")
+        # 存储设施数据
+        labels = np.zeros(len(self.permutation))
+        positions = np.zeros((len(self.permutation), 4))
+        aspect_ratio = np.zeros(len(self.permutation))
+        for x, p in enumerate(self.permutation):
+            x_from = self.state[4 * x + 1] - 0.5 * self.state[4 * x + 3]
+            y_from = self.state[4 * x + 0] + 0.5 * self.state[4 * x + 2]
+            x_to = self.state[4 * x + 1] + 0.5 * self.state[4 * x + 3]
+            y_to = self.state[4 * x + 0] - 0.5 * self.state[4 * x + 2]
 
-        if self.mode == "rgb_array":
-            data = self.state[:]
-            img = Image.fromarray(self.state, "RGB")
+            labels[x] = p
+            positions[x] = [x_from, y_from, x_to, y_to]
+            x_length = x_to - x_from
+            y_length = y_to - y_from
+            aspect_ratio[x] = max(x_length, y_length) / min(x_length, y_length)
 
-        plt.imshow(img)
+        # 创建图形和坐标轴
+        fig, ax = plt.subplots()
+        # 绘制设施
+        for i, label in enumerate(labels):
+            x_from, y_from, x_to, y_to = positions[i]
+            if aspect_ratio[i] > self.fac_limit_aspect.max():
+                rect = patches.Rectangle(
+                    (x_from, y_from),
+                    width=x_to - x_from,
+                    height=y_to - y_from,
+                    edgecolor="red",
+                    facecolor="none",
+                    angle=0.5,
+                )
+            else:
+                rect = patches.Rectangle(
+                    (x_from, y_from),
+                    width=x_to - x_from,
+                    height=y_to - y_from,
+                    edgecolor="green",
+                    facecolor="none",
+                    angle=0,
+                )
+
+            ax.add_patch(rect)
+            # 添加标签
+            ax.text(
+                x_from + (x_to - x_from) / 2,
+                y_from + (y_to - y_from) / 2,
+                # f"{int(label)}, AR={aspect_ratio[i]:.2f}",
+                f"{int(label)}",
+                ha="center",
+                va="center",
+            )
+        ax.set_title("设施布局图")
+        ax.set_xlabel("X轴")
+        ax.set_ylabel("Y轴")
         # 显示MHC
         plt.figtext(
             0.5,
-            0.95,
+            0.93,
             "MHC: {:.2f}".format(FBSUtils.getMHC(self.D, self.F, self.permutation)),
             ha="center",
             fontsize=12,
         )
-        # plt.axis('off') # 关闭坐标轴
+        # 显示Fitness
+        plt.figtext(
+            0.5,
+            0.96,
+            "Fitness: {:.2f}".format(
+                FBSUtils.getFitness(
+                    self.MHC, self.fac_b, self.fac_h, self.fac_limit_aspect
+                )
+            ),
+            ha="center",
+            fontsize=12,
+        )
+        # 设置坐标范围
+        ax.set_xlim(0, self.L)
+        ax.set_ylim(0, self.W)
+        # 添加网格
+        plt.grid(False)
+        plt.gca().set_aspect("equal", adjustable="box")
+        # 显示图形
         plt.show()
-
-        return img
