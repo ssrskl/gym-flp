@@ -1,0 +1,7 @@
+SC30：https://sci-hub.se/10.1080/07408170600844108
+SC35：https://sci-hub.se/10.1080/07408170600844108
+
+AB20：https://www.jstor.org/stable/2627408?seq=8
+- Interdepartment product flow in tens of unit loads per annum
+- Interdepartment material handling cost per unit load per one hundred feet moved in dollars
+- Interdepartment material handling cost; dollars per annum per one hundred feet moved.(Move cost per load)X(Number of loads)
