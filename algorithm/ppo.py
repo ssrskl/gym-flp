@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument('--train', action="store_true", help='leave empty for debugging')
     parser.add_argument('--env', type=str, default='ofp-v0', help='environment name')
     parser.add_argument('--mode', type=str, default='rgb_array', help='state representation mode')
-    parser.add_argument('--instance', type=str, default='P6', help='problem instance')
+    parser.add_argument('--instance', type=str, default='custom', help='problem instance')
     parser.add_argument('--distance', type=str, default='r', help='distance metric')
     parser.add_argument('--step_size', type=int, default=1, help='step size for ofp envs')
     parser.add_argument('--box', action="store_true",  help='input box to use box env, if omitted uses discrete')
@@ -112,7 +112,8 @@ if __name__ == '__main__':
         'mode': args.mode,
         'instance': args.instance,
         'box': args.box,
-        'multi': args.multi
+        'multi': args.multi,
+        'envId': args.env
     }
     env = make_vec_env(env_id=args.env, env_kwargs=env_kwargs, n_envs=1)
     eval_env = make_vec_env(env_id=args.env, env_kwargs=env_kwargs, n_envs=1)
@@ -134,8 +135,6 @@ if __name__ == '__main__':
     g = 'multi' if args.multi else 'single'
     h = int(args.train_steps)
 
-    args.train=True
-    args.train_steps = 10000
     if args.train:
         save_path = f"{a}_{b}_{c}_{d}_{e}_{f}_{g}_{h}"
 
@@ -143,7 +142,7 @@ if __name__ == '__main__':
                     env,
                     learning_rate=9e-5,
                     n_steps=2048,
-                    batch_size=64,
+                    batch_size=1024,
                     n_epochs=10,
                     gamma=0.99,
                     gae_lambda=0.95,
@@ -156,7 +155,6 @@ if __name__ == '__main__':
                     sde_sample_freq=- 1,
                     target_kl=None,
                     tensorboard_log=f'logs/{save_path}',
-                    create_eval_env=False,
                     policy_kwargs=None,
                     verbose=1,
                     seed=42,

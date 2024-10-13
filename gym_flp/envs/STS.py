@@ -1,5 +1,5 @@
 import numpy as np
-import gym
+import gym as gym
 import pickle
 import os
 import math
