@@ -1,4 +1,7 @@
+import itertools
 import random
+import gym
+import gym_flp
 import numpy as np
 import re
 from itertools import permutations, product
@@ -244,6 +247,7 @@ def getTransportIntensity(D, F, s):
     return np.dot(np.dot(D, P), np.dot(F, P.T))
 
 
+# 计算MHC
 def getMHC(D, F, permutation):
     P = permutationMatrix(permutation)
     # MHC = np.sum(np.tril(np.dot(P.T, np.dot(D, P))) * (F.T))
@@ -252,6 +256,7 @@ def getMHC(D, F, permutation):
     return MHC
 
 
+# 计算适应度
 def getFitness(mhc, fac_b, fac_h, fac_limit_aspect):
     aspect_ratio_list = []
     k = 1
@@ -287,6 +292,7 @@ def StatusUpdatingDevice(permutation, bay, a, W, F, fac_limit_aspect_ratio):
     return (fac_x, fac_y, fac_b, fac_h, fac_aspect_ratio, D, TM, mhc, fitness)
 
 
+# -----------------FBS局部优化-----------------
 # 全排列局部优化
 def fullPermutationOptimization(permutation, bay, a, W, D, F, fac_limit_aspect):
     # 对当前的状态进行局部搜索，返回新的状态和适应度函数值
@@ -368,6 +374,135 @@ def exchangeOptimization(
     return best_perm
 
 
+# 排列优化算法
+def arrangementOptimization(
+    permutation: np.ndarray, bay: np.ndarray, instance: str
+):  # -> tuple[ndarray, ndarray]:
+    # 创建env对象
+    env = gym.make("fbs-v0", instance=instance)
+    env.reset(layout=(permutation, bay))
+
+    # 初始化最佳解
+    best_permutation = permutation.copy()
+    best_bay = bay.copy()
+    best_fitness = env.Fitness
+
+    # 将排列和分区转换成二维数组
+    array = permutationToArray(permutation, bay)
+
+    # 遍历每个子数组
+    for i in range(len(array)):
+        best_sub_perm = array[i].copy()  # 当前子数组的最佳排列
+        for perm in itertools.permutations(array[i]):  # 遍历当前子数组的所有排列
+            array[i] = perm
+            # 将二维数组转换回排列和分区
+            permutation, bay = arrayToPermutation(array)
+            env.reset(layout=(permutation, bay))
+            fitness = env.Fitness
+            # 如果找到更优的解，则更新
+            if fitness < best_fitness:
+                best_fitness = fitness
+                best_sub_perm = perm  # 更新子数组最佳排列
+                best_permutation = permutation.copy()  # 更新整体排列
+                best_bay = bay.copy()
+
+        # 固定当前子数组的最佳排列
+        array[i] = best_sub_perm
+        print(f"阶段: {i} 最佳排列: {array}")
+
+    # 输出最终的最佳适应度
+    print(f"best_fitness: {best_fitness}")
+    return best_permutation, best_bay
+
+
+# -----------------FBS动作空间-----------------
+# 返回的类型为：(np.ndarray, np.ndarray)
+
+
+# 交换两个设施
+def facility_swap(permutation: np.ndarray, bay: np.ndarray):
+    """交换两个设施"""
+    # 随机选择两个设施
+    i, j = np.random.choice(len(permutation), 2, replace=False)
+    # 交换设施
+    permutation[i], permutation[j] = permutation[j], permutation[i]
+    return permutation, bay
+
+
+# 交换同一bay中的两个设施, t表示在同一个bay中交换两个设施
+def facility_swap_t(permutation: np.ndarray, bay: np.ndarray):
+    """交换同一bay中的两个设施"""
+    # 选择一个bay
+    bay_index = np.where(bay == 1)[0]
+    if len(bay_index) < 2:
+        return permutation, bay
+    # 随机选择两个设施
+    i, j = np.random.choice(bay_index, 2, replace=False)
+    # 交换设施
+    permutation[i], permutation[j] = permutation[j], permutation[i]
+    return permutation, bay
+
+
+# 将bay的值转换
+def bay_flip(bay: np.ndarray):
+    """将bay的值转换"""
+    index = np.random.choice(len(bay))
+    bay[index] = 1 - bay[index]
+    return bay
+
+
+# 交换两个bay
+def bay_swap(permutation: np.ndarray, bay: np.ndarray):
+    """交换两个bay"""
+    # 转换为二维数组
+    array = permutationToArray(permutation, bay)
+    # 随机选择两个bay
+    i, j = np.random.choice(len(array), 2, replace=False)
+    # 交换两个bay
+    array[i], array[j] = array[j], array[i]
+    # 转换为排列和bay
+    permutation, bay = arrayToPermutation(array)
+    return permutation, bay
+
+
+# 修复bay
+def bay_repair(
+    permutation: np.ndarray,
+    bay: np.ndarray,
+    fac_b: np.ndarray,
+    fac_h: np.ndarray,
+    fac_limit_aspect: np.ndarray,
+):
+    """修复bay"""
+    # 转换为二维数组
+    array = permutationToArray(permutation, bay)
+    # 遍历每个bay
+    for i, bay in enumerate(array):
+        # 计算当前bay的设施的横纵比
+        fac_aspect_ratio = np.maximum(fac_b, fac_h) / np.minimum(fac_b, fac_h)
+        # 如果当前bay的设施的横纵比不满足条件，则进行修复
+        if not (
+            min(fac_limit_aspect[bay - 1])
+            <= fac_aspect_ratio
+            <= max(fac_limit_aspect[bay - 1])
+        ):
+            # 如果太宽了，说明这个bay中的设施过多，则将其对半分（太宽：横坐标长度/纵坐标长度 > 横纵比）
+            if fac_aspect_ratio > max(fac_limit_aspect[bay - 1]):
+                # 将当前bay的设施对半分
+                array[i] = array[i][: len(array[i]) // 2]
+                array.insert(i + 1, array[i])
+            # 如果太窄了，说明这个bay中的设施过少，则将当前bay与相邻的bay进行合并（太窄：纵坐标长度/横坐标长度 > 横纵比）
+            elif fac_aspect_ratio < min(fac_limit_aspect[bay - 1]):
+                # 将当前bay的设施与相邻的bay进行合并
+                array[i] = array[i] + array[i + 1]
+                array.pop(i + 1)
+    # 转换为排列和bay
+    permutation, bay = arrayToPermutation(array)
+    return permutation, bay
+
+
+# TODO 2024-10-07 还未完成FBS的Step编写
+
 # # 相邻交换局部优化算法
 # def adjacent_exchange(self):
 #     # 对当前的状态进行局部搜索，返回新的状态和适应度函数值
@@ -414,4 +549,6 @@ def arrayToPermutation(array):
     for sub_array in array:
         permutation.extend(sub_array)
         bay.extend([0] * (len(sub_array) - 1) + [1])
+    permutation = np.array(permutation)
+    bay = np.array(bay)
     return permutation, bay

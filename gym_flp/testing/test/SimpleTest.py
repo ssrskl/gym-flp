@@ -298,7 +298,7 @@ def load_instance_data(instance, case):
     return permutation, bay
 
 
-instance = "AB20-ar3"
+instance = "O9-maoyan"
 case = "2"
 permutation, bay = load_instance_data(instance, case)
 env = gym.make("fbs-v0", instance=instance, mode="human")

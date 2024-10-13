@@ -193,7 +193,6 @@ class FbsEnv(gym.Env):
         bays = np.split(
             self.permutation, facilities[:-1] + 1
         )  # 将排列按照划分点分割成多个子数组，每个子数组代表一个区段的排列
-
         if a == "Randomize":
             # 随机选择排列中的两个元素，并交换它们的位置
             k = default_rng().choice(
